@@ -1,0 +1,67 @@
+type User @table {
+  username: String!
+  passwordHash: String!
+  email: String!
+  createdAt: Timestamp!
+  firstName: String
+  lastName: String
+  dateOfBirth: Date
+  contactNumber: String
+}
+
+type MedicalDocument @table {
+  user: User
+  documentName: String!
+  documentType: String!
+  uploadDate: Timestamp!
+  fileUrl: String!
+  documentDate: Date
+  tags: [String]
+  notes: String
+}
+
+type HealthcareProvider @table {
+  user: User
+  providerName: String!
+  providerType: String!
+  createdAt: Timestamp!
+  specialty: String
+  contactNumber: String
+  address: String
+}
+
+type Medication @table {
+  user: User
+  medicationName: String!
+  dosage: String!
+  startDate: Date!
+  createdAt: Timestamp!
+  frequency: String
+  endDate: Date
+  notes: String
+  prescribingProvider: HealthcareProvider
+}
+
+type Immunization @table {
+  user: User
+  vaccineName: String!
+  immunizationDate: Date!
+  createdAt: Timestamp!
+  boosterDate: Date
+  notes: String
+  provider: HealthcareProvider
+}
+
+type SharedAccess @table {
+  sharer: User!
+  shareeUser: User
+  shareeHealthcareProvider: HealthcareProvider
+  accessGrantedAt: Timestamp!
+  accessExpiresAt: Timestamp!
+  accessRevokedAt: Timestamp
+}
+
+type SharedDocument @table(key: ["sharedAccess", "medicalDocument"]) {
+  sharedAccess: SharedAccess!
+  medicalDocument: MedicalDocument!
+}

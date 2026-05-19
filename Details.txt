@@ -1,0 +1,66 @@
+# HealthVault (HV4): Comprehensive Technical Dossier
+
+## 1. Project Identity & Vision
+* **Core Problem**: Fragmented medical records across disparate providers, leading to critical data gaps during emergencies and inefficient patient-doctor interactions.
+* **The "Single Source of Truth" Solution**: HealthVault centralizes medical history, active medications, and diagnostic records into a unified, patient-owned repository. It bridges the gap between daily healthcare management and emergency response through its proprietary QR-based Emergency ID System.
+
+## 2. Full Tech Stack Inventory
+* **Frontend Core**: React 19 + TypeScript for type-safe, component-driven development.
+* **Build Tooling**: Vite for lightning-fast HMR and optimized production bundling.
+* **Firebase Ecosystem**:
+    * **Authentication**: Email/Password and Google Sign-In with Role-Based Access Control (RBAC).
+    * **Cloud Firestore**: NoSQL real-time database for structured data.
+    * **Hosting**: Production-grade hosting with global CDN and automated SSL.
+* **UI/UX Framework**: 
+    * **Styling**: Custom CSS architecture with design tokens for consistent theming.
+    * **Icons**: Lucide React for a modern, semantic icon set.
+    * **Special Effects**: SoftAurora background from the React Bits library for a premium aesthetic.
+* **Spatial & Data Visualization**:
+    * **Leaflet**: High-performance interactive maps for outbreak tracking.
+    * **FDA API Integration**: Real-time drug data fetching via api.fda.gov.
+
+## 3. Detailed Database Schema (Cloud Firestore)
+
+| Collection | Key Fields | Relationships |
+| :--- | :--- | :--- |
+| **users** | uid, displayName, role, isVerified, bloodGroup, assignedPatients[], city, lat, lng | Root entity; links doctors to patients via assignedPatients. |
+| **medications** | userId, name, dosage, frequency, status (Active/Past) | Linked to users.uid. Globally readable for emergency access. |
+| **appointments** | patientId, doctorId, date, time, status, notes | Bridges users (Patient) and users (Doctor). |
+| **healthRecords**| userId, title, type (Prescription/Report), fileUrl, date | Clinical data linked to users.uid. |
+| **system** | config, notifications, appSettings | Admin-only configuration document. |
+
+## 4. Feature Logic & Modules
+
+### Emergency ID System
+* **Generation**: Uses qrcode.react to generate high-resolution QR codes encoding a unique URL: https://healthvault-hv4-12104.web.app/emergency-card/{uid}
+* **Export Logic**: Implements html2canvas to render the DOM-based ID card (front/back) into a high-density canvas for PNG export, enabling physical card printing.
+* **Access**: Unauthenticated first responders can scan and view the emergency card, bypassing normal auth via specific Firestore rules for the medications and users (emergency subset) collections.
+
+### MedInsight Explorer
+* **FDA Integration**: Dynamic querying of the OpenFDA database. It performs broad searches (brand/generic) and falls back to full-document text analysis if direct matches fail.
+* **Systemic Visualization**: The BodyMap.tsx component parses FDA "Adverse Reactions" text using a keyword-matching utility (extractAffectedRegions) to highlight physiological impact zones (e.g., "headache" -> Nervous System).
+
+### EpiTrack (Outbreak Intelligence)
+* **Data Aggregation**: Scans the entire users (patients) and medications collections to identify clusters of symptoms or conditions within specific geographic coordinates.
+* **Spatial Analysis**: Uses a dictionary of Indian city coordinates as a fallback for users without GPS data. It applies a "micro-spread" algorithm (random jitter) to visualize clusters on a Leaflet map without compromising exact patient addresses.
+
+## 5. Security & Access Control (RBAC)
+* **Auth Flow**: A custom AuthContext manages the isVerified state. Unverified users are forcefully redirected to /verify-otp via the ProtectedRoute wrapper in App.tsx.
+* **Firestore Rules**:
+    * getUserRole(): A server-side helper function to validate roles.
+    * Least Privilege: Patients can only read/write their own records; Doctors can access assigned patients; Admins have system-wide visibility.
+    * Emergency Exception: medications collection allows public read to ensure first responders can see life-saving info without a login.
+
+## 6. YouTube Integration
+* **Primary Video**: Hero "Watch video" button on LandingPage.tsx links to: https://youtu.be/IESzOJvKvR4?si=UYYjeDMHJgpHIypl
+* **Social Presence**: YouTube icon integrated into Footer and Contact Page for branding and tutorial access.
+
+## 7. Deployment & Production Metadata
+* **Live URL**: https://healthvault-hv4-12104.web.app
+* **Hosting Config**: firebase.json is configured with rewrites for SPA support and headers to prevent caching of index.html, ensuring users always see the latest version after a redeploy.
+* **Asset Pipeline**: Vite build process optimizes chunks and implements tree-shaking for the Lucide and Leaflet libraries to minimize initial load time.
+
+---
+**Status**: Production Ready
+**Architect**: Senior Software Engineer (AI)
+**Date**: May 2026

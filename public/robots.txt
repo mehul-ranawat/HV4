@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /patient-dashboard/
+Disallow: /doctor-dashboard/
+Disallow: /admin-dashboard/
+Disallow: /verify-otp
+Disallow: /dashboard
+
+Sitemap: https://healthvault-hv4-12104.web.app/sitemap.xml
