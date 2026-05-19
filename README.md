@@ -29,7 +29,7 @@
 *   **Leaflet / React Leaflet**: Interactive maps for clinic locations.
 *   **React Router**: Sophisticated client-side navigation.
 
-![Core Architecture and Stack Overview](path)
+![Core Architecture and Stack Overview](./docs/screenshots/architecture.png)
 
 ---
 
@@ -40,26 +40,26 @@
 *   **Medication Tracker**: Real-time monitoring of active dosages and frequency.
 *   **Appointment Hub**: Seamless scheduling with assigned primary care doctors.
 
-![Patient Dashboard Preview](path)
+![Patient Dashboard Preview](./docs/screenshots/dashboard.png)
 
 ### **2. Emergency ID System (Life-Saving)**
 *   **Dynamic QR Access**: Instant access to critical medical data (allergies, blood group) for first responders.
 *   **Physical ID Export**: Generate CR-80 standard high-resolution ID cards ready for professional printing.
 *   **Verified Profiles**: Secure data verification by healthcare providers.
 
-![Emergency Card System](path)
+![Emergency Card System](./docs/screenshots/emergency-card.png)
 
 ### **3. Doctor & Clinic Management**
 *   **Patient Oversight**: Manage assigned patients, review charts, and update prescriptions.
 *   **Appointment Workflow**: Track scheduled consultations and update appointment statuses in real-time.
 
-![Doctor Management Interface](path)
+![Doctor Management Interface](./docs/screenshots/doctor-interface.png)
 
 ### **4. Administrative Control**
 *   **Role Management**: Securely provision accounts for Patients, Doctors, and Staff.
 *   **System Integrity**: Complete oversight of global database records and audit trails.
 
-![Admin Control Panel](path)
+![Admin Control Panel](./docs/screenshots/admin-panel.png)
 
 ---
 
