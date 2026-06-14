@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useLocation } from 'react-router-dom'
 import { db, collection, query, where, getDocs, addDoc, deleteDoc, doc, Timestamp } from '../../firebase/config'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, CalendarDays, ExternalLink, Plus, X, Trash2 } from 'lucide-react'
 import './PatientAppointments.css'
@@ -29,6 +30,7 @@ interface Appointment {
 
 export default function PatientAppointments() {
     const { user } = useAuth()
+    const location = useLocation()
     const [appointments, setAppointments] = useState<Appointment[]>([])
     const [loading, setLoading] = useState(true)
     const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -54,18 +56,25 @@ export default function PatientAppointments() {
                 const q = query(collection(db, 'users'), where('role', '==', 'doctor'))
                 const snap = await getDocs(q)
                 const allDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                // Filter verified doctors or those without the flag (for compatibility)
-                const verifiedDocs = allDocs.filter((d: any) => d.isVerified !== false)
+                // Only show doctors explicitly approved by admin
+                const verifiedDocs = allDocs.filter((d: any) => d.adminApproved === true)
                 setDoctors(verifiedDocs)
                 if (verifiedDocs.length > 0) {
-                    setBookingData(prev => ({ ...prev, doctorId: verifiedDocs[0].id }))
+                    const selectedDocId = (location.state && location.state.doctorId) || verifiedDocs[0].id
+                    setBookingData(prev => ({ ...prev, doctorId: selectedDocId }))
                 }
             } catch (err) {
                 console.error("Error fetching doctors:", err)
             }
         }
         fetchDoctors()
-    }, [user])
+    }, [user, location.state])
+
+    useEffect(() => {
+        if (location.state && location.state.openBooking) {
+            setIsBookingModalOpen(true)
+        }
+    }, [location.state])
 
     useEffect(() => {
         if (!user) return

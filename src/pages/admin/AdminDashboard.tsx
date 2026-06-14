@@ -24,16 +24,15 @@ export default function AdminDashboard() {
     const [doctors, setDoctors] = useState<any[]>([])
     const [credentials, setCredentials] = useState<Record<string, string>>({})
     const [appointmentsCount, setAppointmentsCount] = useState(0)
-    const [allAppointments, setAllAppointments] = useState<any[]>([]) // Needed for Sheets sync
+    const [allAppointments, setAllAppointments] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     // Google Sheets Sync State
     const [isSyncing, setIsSyncing] = useState(false)
     const [sheetUrl] = useState(import.meta.env.VITE_GOOGLE_SHEET_URL)
-    // Let me update the instruction to just ask the user to provide the docs.google.com URL since I only have the script.google.com URL right now.
 
     const [isViewingSheet, setIsViewingSheet] = useState(false)
-    const [activeSheetGid, setActiveSheetGid] = useState('1601664757') // Default to Patients sheet
+    const [activeSheetGid, setActiveSheetGid] = useState('1601664757')
 
     // User Management Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -49,21 +48,18 @@ export default function AdminDashboard() {
         const fetchData = async () => {
             setLoading(true)
             try {
-                // Fetch all users
                 const usersSnap = await getDocs(collection(db, 'users'))
                 const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
                 const pts = allUsers.filter((u: any) => u.role === 'patient')
                 const docs = allUsers.filter((u: any) => u.role === 'doctor')
 
-                // Fetch credentials
                 const credsSnap = await getDocs(collection(db, 'credentials'))
                 const credsMap: Record<string, string> = {}
                 credsSnap.forEach(d => {
                     credsMap[d.id] = d.data().password
                 })
 
-                // Fetch appointments
                 const apptsSnap = await getDocs(collection(db, 'appointments'))
                 const apptsData = apptsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
@@ -111,9 +107,7 @@ export default function AdminDashboard() {
     const handleSyncToSheets = async () => {
         setIsSyncing(true)
         try {
-            // Hardcoded Web App URL from the user
             const WEB_APP_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL
-
 
             const payload = {
                 patients: patients.map(p => ({
@@ -132,7 +126,7 @@ export default function AdminDashboard() {
                     License: d.licenseNumber || '',
                     RegistrationNumber: d.registrationNumber || '',
                     RegistrationState: d.registrationState || '',
-                    Verified: d.isVerified !== false ? 'Yes' : 'Pending Verification'
+                    Verified: d.adminApproved === true ? 'Yes' : 'Pending Admin Approval'
                 })),
                 appointments: allAppointments.map(a => ({
                     ID: a.id,
@@ -147,14 +141,11 @@ export default function AdminDashboard() {
 
             await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Bypasses CORS blocks for one-way webhooks
+                mode: 'no-cors',
                 body: JSON.stringify(payload),
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
-                }
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             })
 
-            // Because "no-cors" returns an opaque response, we assume success if no network error was thrown
             alert("Sent data to Google Sheets! Click 'View in Sheets' to see it.")
         } catch (error) {
             console.error(error)
@@ -163,7 +154,6 @@ export default function AdminDashboard() {
             setIsSyncing(false)
         }
     }
-
 
     const handleSaveUser = async () => {
         setModalError('')
@@ -193,7 +183,8 @@ export default function AdminDashboard() {
                     userData.licenseNumber = formData.licenseNumber
                     userData.registrationNumber = formData.registrationNumber
                     userData.registrationState = formData.registrationState
-                    userData.isVerified = true // Admin created doctors are auto-verified
+                    userData.isVerified = true   // Admin created doctors are auto OTP-verified
+                    userData.adminApproved = true // Admin created doctors are auto admin-approved
                 }
 
                 await setDoc(doc(db, 'users', newUid), userData)
@@ -240,11 +231,12 @@ export default function AdminDashboard() {
         }
     }
 
+    // Admin approval now sets adminApproved: true (separate from OTP isVerified)
     const handleApproveDoctor = async (doctor: any) => {
         if (!window.confirm(`Approve Dr. ${doctor.displayName} for platform access?`)) return;
         try {
-            await updateDoc(doc(db, 'users', doctor.id), { isVerified: true });
-            setDoctors(doctors.map(d => d.id === doctor.id ? { ...d, isVerified: true } : d));
+            await updateDoc(doc(db, 'users', doctor.id), { adminApproved: true });
+            setDoctors(doctors.map(d => d.id === doctor.id ? { ...d, adminApproved: true } : d));
         } catch (err) {
             console.error("Failed to approve:", err);
             alert("Failed to approve the doctor.");
@@ -285,18 +277,19 @@ export default function AdminDashboard() {
 
     const handleRemoveVerification = async () => {
         if (!selectedUser) return
-        if (!window.confirm(`Are you sure you want to remove OTP verification for ${selectedUser.displayName}? They will need to verify via OTP again.`)) return
+        if (!window.confirm(`Remove admin approval for ${selectedUser.displayName}? They will need to be re-approved.`)) return
 
         setModalLoading(true)
         setModalError('')
         try {
             const uid = selectedUser.id
-            await updateDoc(doc(db, 'users', uid), { 
+            await updateDoc(doc(db, 'users', uid), {
+                adminApproved: false,
                 isVerified: false,
                 otp: null
             })
 
-            const updatedUser = { ...selectedUser, isVerified: false, otp: null }
+            const updatedUser = { ...selectedUser, adminApproved: false, isVerified: false, otp: null }
             if (activeTab === 'patients') {
                 setPatients(patients.map(p => p.id === uid ? updatedUser : p))
             } else {
@@ -322,9 +315,10 @@ export default function AdminDashboard() {
         d.specialization?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    // A doctor is considered "verified" if isVerified is true OR if the flag doesn't exist (backwards compatibility)
-    const filteredDoctors = baseDoctors.filter(d => d.isVerified !== false)
-    const pendingDoctors = baseDoctors.filter(d => d.isVerified === false)
+    // A doctor is in "Verified" only if adminApproved === true (explicit admin action)
+    // A doctor is "Pending" if they don't have adminApproved: true yet
+    const filteredDoctors = baseDoctors.filter(d => d.adminApproved === true)
+    const pendingDoctors = baseDoctors.filter(d => d.adminApproved !== true)
 
     if (loading) return <div className="admin-loading">Loading administrative data...</div>
 
@@ -374,7 +368,7 @@ export default function AdminDashboard() {
                         </div>
                         <div style={{ padding: '0 20px', display: 'flex', gap: '10px', marginTop: '10px' }}>
                             <button
-                                onClick={() => setActiveSheetGid('0')} // We need the real GID for Patients
+                                onClick={() => setActiveSheetGid('0')}
                                 style={{
                                     padding: '8px 16px', background: activeSheetGid === '0' ? '#3b82f6' : '#e2e8f0',
                                     color: activeSheetGid === '0' ? 'white' : '#475569',
@@ -384,7 +378,7 @@ export default function AdminDashboard() {
                                 Patients
                             </button>
                             <button
-                                onClick={() => setActiveSheetGid('1236258077')} // Need real GID
+                                onClick={() => setActiveSheetGid('1236258077')}
                                 style={{
                                     padding: '8px 16px', background: activeSheetGid === '1236258077' ? '#3b82f6' : '#e2e8f0',
                                     color: activeSheetGid === '1236258077' ? 'white' : '#475569',
@@ -394,7 +388,7 @@ export default function AdminDashboard() {
                                 Doctors
                             </button>
                             <button
-                                onClick={() => setActiveSheetGid('557451661')} // Need real GID
+                                onClick={() => setActiveSheetGid('557451661')}
                                 style={{
                                     padding: '8px 16px', background: activeSheetGid === '557451661' ? '#3b82f6' : '#e2e8f0',
                                     color: activeSheetGid === '557451661' ? 'white' : '#475569',
@@ -663,10 +657,10 @@ export default function AdminDashboard() {
                                     <button className="admin-btn delete" style={{ margin: 0 }} onClick={handleDeleteUser} disabled={modalLoading}>
                                         <Trash2 size={16} /> Delete User
                                     </button>
-                                    <button 
-                                        className="admin-btn" 
+                                    <button
+                                        className="admin-btn"
                                         style={{ backgroundColor: '#fffbeb', color: '#b45309', borderRadius: '6px', padding: '10px 16px', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                        onClick={handleRemoveVerification} 
+                                        onClick={handleRemoveVerification}
                                         disabled={modalLoading}
                                         type="button"
                                     >

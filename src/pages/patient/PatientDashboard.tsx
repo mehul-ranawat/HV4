@@ -56,7 +56,7 @@ export default function PatientDashboard() {
                 )
                 const docSnap = await getDocs(docQ)
                 const allDoctors = docSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-                fetchedDoctors = allDoctors.filter((d: any) => d.isVerified !== false)
+                fetchedDoctors = allDoctors.filter((d: any) => d.adminApproved === true)
                 setMyDoctors(fetchedDoctors)
 
                 // Fetch Health Records Count
@@ -237,7 +237,7 @@ export default function PatientDashboard() {
                     <div className="dash-card-header">
                         <h2><Stethoscope size={18} /> My Care Team</h2>
                     </div>
-                    <div className="dash-card-body">
+                    <div className="dash-card-body" style={{ maxHeight: '300px', overflowY: 'auto' }}>
                         {myDoctors.length > 0 ? myDoctors.map(doc => (
                             <div key={doc.id} className="dash-activity-item" style={{ alignItems: 'flex-start' }}>
                                 <div className="dash-avatar" style={{ background: '#e0e7ff', color: '#4f46e5', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>

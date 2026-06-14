@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { db, collection, query, where, getDocs, doc, updateDoc } from '../../firebase/config'
+import { db, collection, query, where, getDocs, doc, updateDoc, addDoc } from '../../firebase/config'
 import {
     Clock, Calendar, User, FileText, AlertTriangle, ShieldAlert,
     CheckCircle2, Plus, Download, Sunrise, Sun, Sunset, Moon, Bell, Edit
@@ -39,6 +39,64 @@ export default function PatientMedications() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'schedule' | 'active' | 'add' | 'history' | 'emergency'>('schedule')
     const [editingMed, setEditingMed] = useState<Medication | null>(null)
+    const [showAddForm, setShowAddForm] = useState(false)
+    const [newMedData, setNewMedData] = useState({
+        name: '',
+        dosage: '',
+        frequency: 'Once daily',
+        timing: 'Morning',
+        condition: '',
+        prescribingDoctor: '',
+        refillStatus: '30'
+    })
+    const [submittingNewMed, setSubmittingNewMed] = useState(false)
+
+    const handleAddMedication = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!user) return
+
+        setSubmittingNewMed(true)
+        try {
+            const medicationPayload = {
+                userId: user.uid,
+                name: newMedData.name,
+                dosage: newMedData.dosage,
+                frequency: newMedData.frequency,
+                timing: newMedData.timing,
+                condition: newMedData.condition,
+                refillStatus: parseInt(newMedData.refillStatus) || 30,
+                status: 'Active' as const,
+                prescribingDoctor: newMedData.prescribingDoctor || 'Self Prescribed',
+                startDate: new Date()
+            }
+
+            const docRef = await addDoc(collection(db, 'medications'), medicationPayload)
+
+            const addedMed: Medication = {
+                id: docRef.id,
+                ...medicationPayload
+            }
+            setMedications(prev => [...prev, addedMed])
+
+            setNewMedData({
+                name: '',
+                dosage: '',
+                frequency: 'Once daily',
+                timing: 'Morning',
+                condition: '',
+                prescribingDoctor: '',
+                refillStatus: '30'
+            })
+            setShowAddForm(false)
+            setActiveTab('active')
+            alert("Medication added successfully!")
+        } catch (err) {
+            console.error("Error adding medication:", err)
+            alert("Failed to add medication.")
+        } finally {
+            setSubmittingNewMed(false)
+        }
+    }
 
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -289,13 +347,133 @@ export default function PatientMedications() {
 
                     {/* --- TAB: ADD MEDICATION --- */}
                     {activeTab === 'add' && (
-                        <div className="add-med-container">
-                            <Plus size={48} color="#94a3b8" style={{ marginBottom: 16 }} />
-                            <h2>Add New Medication</h2>
-                            <p>Manually enter details or scan your prescription to auto-fill.</p>
-                            <button className="add-btn-large"><Plus size={18} /> Add Medication Manually</button>
-                            <br /><br />
-                            <p style={{ fontSize: '0.85rem' }}>* AI Scan feature coming soon.</p>
+                        <div>
+                            {!showAddForm ? (
+                                <div className="add-med-container">
+                                    <Plus size={48} color="#94a3b8" style={{ marginBottom: 16 }} />
+                                    <h2>Add New Medication</h2>
+                                    <p>Manually enter details or scan your prescription to auto-fill.</p>
+                                    <button 
+                                        className="add-btn-large"
+                                        onClick={() => setShowAddForm(true)}
+                                    >
+                                        <Plus size={18} /> Add Medication Manually
+                                    </button>
+                                    <br /><br />
+                                    <p style={{ fontSize: '0.85rem' }}>* AI Scan feature coming soon.</p>
+                                </div>
+                            ) : (
+                                <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px', maxWidth: '600px', margin: '0 auto', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                                    <h3 style={{ margin: '0 0 16px 0', fontSize: '1.25rem', color: '#1e293b' }}>Enter Medication Details</h3>
+                                    <form onSubmit={handleAddMedication} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Medication Name</label>
+                                            <input 
+                                                type="text" 
+                                                required 
+                                                placeholder="e.g. Paracetamol" 
+                                                value={newMedData.name} 
+                                                onChange={e => setNewMedData({ ...newMedData, name: e.target.value })} 
+                                                style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                            />
+                                        </div>
+                                        
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Dosage</label>
+                                                <input 
+                                                    type="text" 
+                                                    required 
+                                                    placeholder="e.g. 500mg, 1 tablet" 
+                                                    value={newMedData.dosage} 
+                                                    onChange={e => setNewMedData({ ...newMedData, dosage: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Refill Supply (Days)</label>
+                                                <input 
+                                                    type="number" 
+                                                    required 
+                                                    min="1"
+                                                    value={newMedData.refillStatus} 
+                                                    onChange={e => setNewMedData({ ...newMedData, refillStatus: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Frequency</label>
+                                                <select 
+                                                    value={newMedData.frequency} 
+                                                    onChange={e => setNewMedData({ ...newMedData, frequency: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem', background: 'white' }}
+                                                >
+                                                    <option value="Once daily">Once daily</option>
+                                                    <option value="Twice daily">Twice daily</option>
+                                                    <option value="Three times daily">Three times daily</option>
+                                                    <option value="Every 4-6 hours">Every 4-6 hours</option>
+                                                    <option value="As needed (PRN)">As needed (PRN)</option>
+                                                </select>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Timing</label>
+                                                <input 
+                                                    type="text" 
+                                                    required 
+                                                    placeholder="e.g. Morning, Night, After food" 
+                                                    value={newMedData.timing} 
+                                                    onChange={e => setNewMedData({ ...newMedData, timing: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Condition</label>
+                                                <input 
+                                                    type="text" 
+                                                    required 
+                                                    placeholder="e.g. Fever, Cough" 
+                                                    value={newMedData.condition} 
+                                                    onChange={e => setNewMedData({ ...newMedData, condition: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 500, color: '#475569' }}>Prescribing Doctor</label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="e.g. Dr. Rajesh Kumar (Optional)" 
+                                                    value={newMedData.prescribingDoctor} 
+                                                    onChange={e => setNewMedData({ ...newMedData, prescribingDoctor: e.target.value })} 
+                                                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.95rem' }} 
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setShowAddForm(false)} 
+                                                style={{ padding: '10px 16px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '6px', cursor: 'pointer', fontWeight: 500, color: '#475569' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button 
+                                                type="submit" 
+                                                disabled={submittingNewMed}
+                                                style={{ padding: '10px 16px', background: '#3b82f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500, color: 'white' }}
+                                            >
+                                                {submittingNewMed ? 'Saving...' : 'Add Medication'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
                         </div>
                     )}
 

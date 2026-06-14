@@ -10,7 +10,7 @@
 //   - Sanket Deshmukh     (Data Engineering)
 
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { db, doc, getDoc, collection, query, where, getDocs, addDoc, Timestamp, orderBy } from '../../firebase/config'
 import { Calendar, MapPin, Award, ArrowLeft, Star, MessageSquare, Shield, FileText } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext'
 export default function DoctorProfile() {
     const { id } = useParams()
     const { user } = useAuth()
+    const navigate = useNavigate()
     const [doctor, setDoctor] = useState<any>(null)
     const [loading, setLoading] = useState(true)
 
@@ -149,7 +150,11 @@ export default function DoctorProfile() {
                         <h2>Quick Actions</h2>
                     </div>
                     <div className="dash-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <button className="dash-quick-btn" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 8 }}>
+                        <button 
+                            className="dash-quick-btn" 
+                            style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 8 }}
+                            onClick={() => navigate('/patient-dashboard/appointments', { state: { doctorId: id, openBooking: true } })}
+                        >
                             <Calendar size={18} /> Book Appointment
                         </button>
                         {hasTreatmentHistory && (

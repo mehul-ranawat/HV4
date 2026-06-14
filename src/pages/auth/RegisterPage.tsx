@@ -69,6 +69,7 @@ export default function RegisterPage() {
                     userData.licenseNumber = licenseNumber
                     userData.registrationNumber = registrationNumber
                     userData.registrationState = registrationState
+                    userData.adminApproved = false // Requires explicit admin approval beyond OTP
                 }
 
                 await setDoc(userDocRef, userData)

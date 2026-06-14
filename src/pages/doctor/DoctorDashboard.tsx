@@ -67,21 +67,22 @@ export default function DoctorDashboard() {
     useEffect(() => {
         if (!user) return
 
-        // Check doctor verification status
+        // Check doctor admin-approval status (separate from OTP/email verification)
         const checkVerification = async () => {
             try {
                 const userDocRef = doc(db, 'users', user.uid)
                 const userDocSnap = await getDoc(userDocRef)
                 if (userDocSnap.exists()) {
                     const data = userDocSnap.data()
-                    // Backwards compat: if isVerified doesn't exist, treat as verified
-                    setIsVerified(data.isVerified !== false)
+                    // Doctors must have adminApproved: true set explicitly by admin.
+                    // OTP verification (isVerified) is only email confirmation — NOT dashboard access.
+                    setIsVerified(data.adminApproved === true)
                 } else {
-                    setIsVerified(true)
+                    setIsVerified(false)
                 }
             } catch (err) {
                 console.error("Error checking verification:", err)
-                setIsVerified(true) // Don't block if check fails
+                setIsVerified(false) // Block on error to be safe
             }
         }
         checkVerification()

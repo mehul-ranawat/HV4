@@ -12,7 +12,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { db, doc, getDoc, updateDoc } from '../../firebase/config'
-import { storage, ref, uploadBytes, getDownloadURL } from '../../firebase/config'
 import { User, Phone, MapPin, Mail, AlertTriangle, Edit2, Shield, Camera, Save, X, Activity, Award, QrCode, Download, ExternalLink } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { Link } from 'react-router-dom'
@@ -64,6 +63,9 @@ export default function MyProfile() {
 
             if (section === 'personal') {
                 updatePayload = {
+                    displayName: formData.displayName || '',
+                    age: formData.age !== undefined && formData.age !== '' ? parseInt(formData.age, 10) : '',
+                    gender: formData.gender || '',
                     phone: formData.phone || '',
                     city: formData.city || '',
                     address: formData.address || '',
@@ -115,6 +117,36 @@ export default function MyProfile() {
         if (section === 'professional') setIsEditingProfessional(false)
     }
 
+    const compressImageToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(file)
+            reader.onload = (event) => {
+                const img = new Image()
+                img.src = event.target?.result as string
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    const size = 150
+                    canvas.width = size
+                    canvas.height = size
+                    const ctx = canvas.getContext('2d')
+                    if (!ctx) {
+                        resolve(event.target?.result as string)
+                        return
+                    }
+                    const minDim = Math.min(img.width, img.height)
+                    const sx = (img.width - minDim) / 2
+                    const sy = (img.height - minDim) / 2
+                    ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+                    resolve(dataUrl)
+                }
+                img.onerror = (err) => reject(err)
+            }
+            reader.onerror = (err) => reject(err)
+        })
+    }
+
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file || !user) return
@@ -124,20 +156,11 @@ export default function MyProfile() {
             return
         }
 
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Image must be less than 2MB.')
-            return
-        }
-
         setUploadingPhoto(true)
         try {
-            const storageRef = ref(storage, `profilePhotos/${user.uid}`)
-            await uploadBytes(storageRef, file)
-            const photoUrl = await getDownloadURL(storageRef)
-
+            const photoUrl = await compressImageToBase64(file)
             const userRef = doc(db, 'users', user.uid)
             await updateDoc(userRef, { photoUrl })
-
             setProfileData((prev: any) => ({ ...prev, photoUrl }))
         } catch (err) {
             console.error("Error uploading photo:", err)
@@ -185,7 +208,7 @@ export default function MyProfile() {
                             </div>
                             <h2 className="identity-name">{profileData.displayName}</h2>
                             <div className="identity-basic">
-                                {profileData.age} years old • {profileData.gender}
+                                {profileData.age ? `${profileData.age} years old` : 'Age not set'} • {profileData.gender || 'Gender not set'}
                             </div>
                             {profileData.bloodGroup && (
                                 <div className="blood-group-badge" title="Blood Group">
@@ -208,6 +231,27 @@ export default function MyProfile() {
                         <div className="profile-card-body">
                             {isEditingPersonal ? (
                                 <div>
+                                    <div className="profile-form-group">
+                                        <label>Full Name</label>
+                                        <input type="text" value={formData.displayName || ''} onChange={e => handleInputChange('displayName', e.target.value)} />
+                                    </div>
+                                    <div className="profile-form-group">
+                                        <label>Age</label>
+                                        <input type="number" min="0" max="120" value={formData.age || ''} onChange={e => handleInputChange('age', e.target.value)} />
+                                    </div>
+                                    <div className="profile-form-group">
+                                        <label>Gender</label>
+                                        <select
+                                            value={formData.gender || ''}
+                                            onChange={e => handleInputChange('gender', e.target.value)}
+                                            style={{ padding: '8px 12px', borderColor: '#cbd5e1', borderRadius: '6px', width: '100%', boxSizing: 'border-box' }}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
                                     <div className="profile-form-group">
                                         <label>Phone Number</label>
                                         <input type="text" value={formData.phone || ''} onChange={e => handleInputChange('phone', e.target.value)} />
