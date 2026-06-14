@@ -103,17 +103,17 @@ const HV_LIST = [
 const TESTIMONIALS = [
     {
         quote: 'The medication tracking feature is a lifesaver. I never miss a dose anymore.',
-        name: 'James W.',
+        name: 'Mehul Ranawat',
         role: 'Patient',
     },
     {
         quote: "It feels like HealthVault understands how I think about my health.",
-        name: 'Lisa K.',
+        name: 'Srushti Reddy',
         role: 'Patient',
     },
     {
         quote: "It's the only health management tool I open daily — and enjoy using.",
-        name: 'Robert G.',
+        name: 'Laxmi Nayakodi',
         role: 'Patient',
     },
 ]
@@ -236,21 +236,6 @@ export default function LandingPage() {
                             <span className="hero-video-icon"><Play size={14} /></span>
                             Watch video
                         </a>
-                    </div>
-
-                    <div className="hero-stats">
-                        <div className="stat-item">
-                            <div className="stat-value">10k+</div>
-                            <div className="stat-label">Happy Patients</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value">5k+</div>
-                            <div className="stat-label">Verified Doctors</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value">99.9%</div>
-                            <div className="stat-label">Data Accuracy</div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -566,7 +551,6 @@ export default function LandingPage() {
                             <ul>
                                 <li><Link to="/contact">Contact</Link></li>
                                 <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-                                <li><a href="#">Terms</a></li>
                                 <li><a href="#faq">FAQ</a></li>
                                 <li><Link to="/login">Doctor Portal</Link></li>
                             </ul>

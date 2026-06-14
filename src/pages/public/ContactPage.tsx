@@ -36,13 +36,13 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     // Simulate API call to support endpoint
     setTimeout(() => {
       setIsSubmitting(false)
       setIsSuccess(true)
       setFormData({ name: '', email: '', subject: 'General Inquiry', message: '' })
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => setIsSuccess(false), 5000)
     }, 1500)
@@ -78,7 +78,7 @@ export default function ContactPage() {
       {/* Split-Card Wrapper */}
       <section className="container" style={{ padding: '0 24px' }}>
         <div className="contact-wrapper">
-          
+
           {/* Left Side: Info Panel */}
           <div className="contact-info-panel">
             <h3>Contact Information</h3>
@@ -91,8 +91,7 @@ export default function ContactPage() {
                 <Mail className="info-icon" size={24} />
                 <div className="info-content">
                   <h4>Email Support</h4>
-                  <p>support@healthvault.in</p>
-                  <p>admin@healthvault.in</p>
+                  <p>finalyp26@gmail.com</p>
                 </div>
               </div>
 
@@ -100,7 +99,7 @@ export default function ContactPage() {
                 <Phone className="info-icon" size={24} />
                 <div className="info-content">
                   <h4>Phone Number</h4>
-                  <p>+91 1800-123-4567</p>
+                  <p>+91 12345 67890</p>
                   <p>Mon - Fri, 9am to 6pm IST</p>
                 </div>
               </div>
@@ -109,8 +108,8 @@ export default function ContactPage() {
                 <MapPin className="info-icon" size={24} />
                 <div className="info-content">
                   <h4>Corporate Office</h4>
-                  <p>HealthVault Technologies Wing 4,</p>
-                  <p>Cyber City, Gurugram, India</p>
+                  <p>HealthVault Team</p>
+                  <p>SLAM STUDIO ORGANIZATION - GITHUB</p>
                 </div>
               </div>
 
@@ -121,7 +120,7 @@ export default function ContactPage() {
                   <p>24/7 for Premium Clinics</p>
                 </div>
               </div>
-              
+
               <div className="info-item">
                 <Youtube className="info-icon" size={24} style={{ color: '#ef4444' }} />
                 <div className="info-content">
@@ -135,7 +134,7 @@ export default function ContactPage() {
           {/* Right Side: Form Panel */}
           <div className="contact-form-panel">
             <h3>Send us a message</h3>
-            
+
             {isSuccess && (
               <div className="success-message">
                 <CheckCircle2 size={24} />
@@ -146,34 +145,34 @@ export default function ContactPage() {
             <form className="contact-form" onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="name">Full Name</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
                   placeholder="e.g. Dr. Rajesh Kumar"
                   value={formData.name}
                   onChange={handleChange}
-                  required 
+                  required
                 />
               </div>
 
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email" 
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  required 
+                  required
                 />
               </div>
 
               <div className="form-group">
                 <label htmlFor="subject">Subject</label>
-                <select 
-                  id="subject" 
+                <select
+                  id="subject"
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
@@ -188,13 +187,13 @@ export default function ContactPage() {
 
               <div className="form-group">
                 <label htmlFor="message">Message</label>
-                <textarea 
-                  id="message" 
-                  name="message" 
+                <textarea
+                  id="message"
+                  name="message"
                   placeholder="How can we help you?"
                   value={formData.message}
                   onChange={handleChange}
-                  required 
+                  required
                 />
               </div>
 
@@ -205,7 +204,7 @@ export default function ContactPage() {
               </button>
             </form>
           </div>
-          
+
         </div>
       </section>
 
